@@ -411,8 +411,8 @@ func (lm *LocalMembership) registerIdentity(id string, typ string, path string, 
 }
 
 func (lm *LocalMembership) addResolver(Name string, Type string, EnrollmentID string, defaultID bool, IdentityGetter GetIdentityFunc) {
-	lm.resolversMutex.RLock()
-	defer lm.resolversMutex.RUnlock()
+	lm.resolversMutex.Lock()
+	defer lm.resolversMutex.Unlock()
 
 	if Type == BccspMSP && lm.binderService != nil {
 		id, _, err := IdentityGetter(nil)
@@ -447,8 +447,8 @@ func (lm *LocalMembership) addResolver(Name string, Type string, EnrollmentID st
 }
 
 func (lm *LocalMembership) getAnonymousResolver(label string) *Resolver {
-	lm.resolversMutex.RLock()
-	defer lm.resolversMutex.RUnlock()
+	lm.resolversMutex.Lock()
+	defer lm.resolversMutex.Unlock()
 
 	if logger.IsEnabledFor(zapcore.DebugLevel) {
 		logger.Debugf("get anonymous identity info by label [%s]", label)
@@ -473,8 +473,8 @@ func (lm *LocalMembership) getAnonymousResolver(label string) *Resolver {
 }
 
 func (lm *LocalMembership) getLongTermResolver(label string) *Resolver {
-	lm.resolversMutex.RLock()
-	defer lm.resolversMutex.RUnlock()
+	lm.resolversMutex.Lock()
+	defer lm.resolversMutex.Unlock()
 
 	r, ok := lm.resolversByName[label]
 	if ok {
