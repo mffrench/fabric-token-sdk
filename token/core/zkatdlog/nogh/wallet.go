@@ -231,7 +231,7 @@ func newOwnerWallet(tokenService *Service, id string, identityInfo *api2.Identit
 		identityInfo: identityInfo,
 		prefix:       fmt.Sprintf("%s:%s:%s", tokenService.Channel, tokenService.Namespace, id),
 	}
-	w.cache = tms.NewWalletIdentityCache(w.getRecipientIdentity, 200)
+	w.cache = tms.NewWalletIdentityCache(w.getRecipientIdentity, tms.DefaultCacheSize)
 
 	return w
 }
