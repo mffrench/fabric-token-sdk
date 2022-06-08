@@ -8,6 +8,7 @@ package processor
 
 import (
 	"encoding/json"
+	"runtime/debug"
 
 	view2 "github.com/hyperledger-labs/fabric-smart-client/platform/view"
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/services/events"
@@ -45,8 +46,11 @@ type CommonTokenStore struct {
 func NewCommonTokenStore(sp view2.ServiceProvider) *CommonTokenStore {
 	notifier, err := events.GetPublisher(sp)
 	if err != nil {
-		// TODO how to handle error here?
-		logger.Warnf("cannot get notifier instance")
+		// TODO how to handle error here? -> begin to identity different use case which raise that
+		logger.Debugf("cannot get notifier instance")
+		if logger.IsEnabledFor(zapcore.DebugLevel) {
+			debug.PrintStack()
+		}
 		// just return nil?
 	}
 

@@ -6,6 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 
 package processor
 
+import (
+	"go.uber.org/zap/zapcore"
+	"runtime/debug"
+)
+
 const (
 	AddToken    = "store-token"
 	DeleteToken = "delete-token"
@@ -41,7 +46,10 @@ func (t *TokenProcessorEvent) Message() interface{} {
 
 func (cts *CommonTokenStore) Notify(topic string, walletID, tokenType, txID string, index uint64) {
 	if cts.notifier == nil {
-		logger.Warnf("cannot notify others!")
+		logger.Debugf("cannot notify others!")
+		if logger.IsEnabledFor(zapcore.DebugLevel) {
+			debug.PrintStack()
+		}
 		return
 	}
 

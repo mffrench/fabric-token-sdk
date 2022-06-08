@@ -99,7 +99,7 @@ func (s *VaultPublicParamsLoader) Load() (*crypto.PublicParams, error) {
 		return nil, err
 	}
 	if len(raw) == 0 {
-		logger.Warnf("public parameters not found")
+		logger.Debugf("public parameters not found")
 		raw, err = s.PublicParamsFetcher.Fetch()
 		if err != nil {
 			logger.Errorf("failed retrieving public params [%s]", err)
