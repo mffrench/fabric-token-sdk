@@ -232,7 +232,7 @@ func newOwnerWallet(tokenService *Service, id string, identityInfo *api2.Identit
 		prefix:       fmt.Sprintf("%s:%s:%s", tokenService.Channel, tokenService.Namespace, id),
 	}
 	w.cache = tms.NewWalletIdentityCache(w.getRecipientIdentity, tms.DefaultCacheSize)
-
+	logger.Debugf("added wallet cache for id %s with cache of size %d", id+"@"+identityInfo.EnrollmentID, tms.DefaultCacheSize)
 	return w
 }
 
