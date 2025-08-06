@@ -179,7 +179,7 @@ func (db *TokenDB) SpendableTokensIteratorBy(ctx context.Context, walletID strin
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to compile query")
 	}
-	logger.Warn(query, args)
+	logger.Debug(query, args)
 	span.AddEvent("start_query", tracing.WithAttributes(tracing.String(QueryLabel, query)))
 	rows, err := db.readDB.Query(query, args...)
 	span.AddEvent("end_query")

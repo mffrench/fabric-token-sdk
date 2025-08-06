@@ -43,11 +43,11 @@ func (l *KeyManagerProvider) Get(identityConfig *driver.IdentityConfiguration) (
 	var err error
 	if len(identityConfig.Raw) != 0 {
 		// load the config directly from identityConfig.Raw
-		logger.Infof("load the config directly from identityConfig.Raw [%s][%s]", identityConfig.ID, hash.Hashable(identityConfig.Raw))
+		logger.Debugf("load the config directly from identityConfig.Raw [%s][%s]", identityConfig.ID, hash.Hashable(identityConfig.Raw))
 		conf, err = crypto2.NewConfigFromRaw(l.issuerPublicKey, identityConfig.Raw)
 	} else {
 		// load from URL
-		logger.Infof("load the config form identityConfig.URL [%s][%s]", identityConfig.ID, identityConfig.URL)
+		logger.Debugf("load the config form identityConfig.URL [%s][%s]", identityConfig.ID, identityConfig.URL)
 		conf, err = crypto2.NewConfigWithIPK(l.issuerPublicKey, identityConfig.URL, l.ignoreVerifyOnlyWallet)
 	}
 	if err != nil {

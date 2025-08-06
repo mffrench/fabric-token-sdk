@@ -1032,7 +1032,7 @@ func (r *Request) SetSignatures(sigmas map[string][]byte) bool {
 	for i, signer := range signers {
 		if sigma, ok := sigmas[signer.UniqueID()]; ok {
 			signatures[i] = sigma
-			r.TokenService.logger.Warnf("signature [%d] for signer [%s] is [%s]", i, signer, hash.Hashable(sigma))
+			r.TokenService.logger.Debugf("signature [%d] for signer [%s] is [%s]", i, signer, hash.Hashable(sigma))
 		} else {
 			all = false
 			r.TokenService.logger.Warnf("signature [%d] for signer [%s] not found", i, signer)

@@ -114,7 +114,7 @@ func (s *selector) Select(owner token.OwnerFilter, q string, currency token2.Typ
 			}
 
 			if immediateRetries > maxImmediateRetries {
-				s.logger.Warnf("Exceeded max number of immediate retries. Unlock tokens and abort...")
+				s.logger.Debugf("Exceeded max number of immediate retries. Unlock tokens and abort...")
 				if err := s.locker.UnlockAll(); err != nil {
 					return nil, nil, errors.Wrapf(err, "exceeded number of retries: %d and unlock failed", maxImmediateRetries)
 				}
