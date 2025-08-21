@@ -24,6 +24,7 @@ type TxOptions struct {
 	NetworkTxID               network.TxID
 	NoCachingRequest          bool
 	AnonymousTransaction      bool
+	SBContext                 []byte
 }
 
 func CompileOpts(opts ...TxOption) (*TxOptions, error) {
@@ -142,6 +143,14 @@ func WithNetworkTxID(id network.TxID) TxOption {
 func WithAnonymousTransaction(v bool) TxOption {
 	return func(o *TxOptions) error {
 		o.AnonymousTransaction = v
+		return nil
+	}
+}
+
+// WithSBContext is used to allow side business validators processing within token tx approval and before the actual token request approval
+func WithSBContext(sbcontext []byte) TxOption {
+	return func(o *TxOptions) error {
+		o.SBContext = sbcontext
 		return nil
 	}
 }

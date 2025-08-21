@@ -9,7 +9,10 @@ package driver
 import (
 	"github.com/hyperledger-labs/fabric-smart-client/platform/view/view"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/core"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/core/common"
 	v1 "github.com/hyperledger-labs/fabric-token-sdk/token/core/zkatdlog/nogh/v1/crypto"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/core/zkatdlog/nogh/v1/crypto/issue"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/core/zkatdlog/nogh/v1/crypto/transfer"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/core/zkatdlog/nogh/v1/validator"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/driver"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/identity"
@@ -23,6 +26,7 @@ import (
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/identity/wallet"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/identity/x509"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/logging"
+	"github.com/hyperledger-labs/fabric-token-sdk/token/services/tokens/core/comm"
 	"github.com/pkg/errors"
 )
 
@@ -42,7 +46,28 @@ func (d *base) DefaultValidator(pp driver.PublicParameters) (driver.Validator, e
 		return nil, errors.Errorf("failed to create token service deserializer: %v", err)
 	}
 	logger := logging.DriverLoggerFromPP("token-sdk.driver.zkatdlog", pp.Identifier())
-	return validator.New(logger, pp.(*v1.PublicParams), deserializer), nil
+	logger.Warnf("Instanciating token-sdk.driver.zkatdlog default validator (%s)", pp.Identifier())
+	return validator.New(logger, pp.(*v1.PublicParams), deserializer, []validator.ValidateIssueFunc{}, []validator.ValidateTransferFunc{}, []validator.ValidateSBContextFunc{}), nil
+}
+
+type ValidateTransferFunc = common.ValidateTransferFunc[*v1.PublicParams, *comm.Token, *transfer.Action, *issue.Action, driver.Deserializer]
+
+func L2ExtendedDefaultValidator(
+	pp driver.PublicParameters,
+	extraIssueValidators []validator.ValidateIssueFunc,
+	extraTransferValidators []validator.ValidateTransferFunc,
+	extraL2ContextValidators []validator.ValidateSBContextFunc,
+) (driver.Validator, error) {
+	if pp.Identifier() != v1.DLogPublicParameters {
+		return nil, errors.Errorf("Should be used only with %s public parameters", v1.DLogPublicParameters)
+	}
+	deserializer, err := NewDeserializer(pp.(*v1.PublicParams))
+	if err != nil {
+		return nil, errors.Errorf("failed to create token service deserializer: %v", err)
+	}
+	logger := logging.DriverLoggerFromPP("token-sdk.driver.zkatdlog", pp.Identifier())
+	logger.Warnf("Instanciating token-sdk.driver.zkatdlog L2 extended default validator (%s)", pp.Identifier())
+	return validator.New(logger, pp.(*v1.PublicParams), deserializer, extraIssueValidators, extraTransferValidators, extraL2ContextValidators), nil
 }
 
 func (d *base) newWalletService(

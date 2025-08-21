@@ -52,7 +52,7 @@ func NewTokenService(
 		return nil, err
 	}
 
-	validator, err := validator.New(logger, ppm.PublicParams(), deserializer), nil
+	validator, err := validator.New(logger, ppm.PublicParams(), deserializer, []validator.ValidateIssueFunc{}, []validator.ValidateTransferFunc{}, []validator.ValidateSBContextFunc{}), nil
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to instantiate validator")
 	}

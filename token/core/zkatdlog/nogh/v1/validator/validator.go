@@ -16,6 +16,8 @@ import (
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/logging"
 )
 
+type ValidateSBContextFunc = common.ValidateSBContextFunc[*v1.PublicParams, *token.Token, *transfer.Action, *issue.Action, driver.Deserializer]
+
 type ValidateTransferFunc = common.ValidateTransferFunc[*v1.PublicParams, *token.Token, *transfer.Action, *issue.Action, driver.Deserializer]
 
 type ValidateIssueFunc = common.ValidateIssueFunc[*v1.PublicParams, *token.Token, *transfer.Action, *issue.Action, driver.Deserializer]
@@ -54,8 +56,15 @@ func New(
 	logger logging.Logger,
 	pp *v1.PublicParams,
 	deserializer driver.Deserializer,
-	extraValidators ...ValidateTransferFunc,
+	extraIssueValidators []ValidateIssueFunc,
+	extraTransferValidators []ValidateTransferFunc,
+	extraL2ContextValidators []ValidateSBContextFunc,
 ) *Validator {
+	logger.Warnf(
+		"Instanciating token.core.zkatdlog.nogh.v1.validator with [%d] extraIssueValidators and [%d] extraTransferValidators",
+		len(extraIssueValidators), len(extraTransferValidators),
+	)
+
 	transferValidators := []ValidateTransferFunc{
 		TransferActionValidate,
 		TransferSignatureValidate,
@@ -63,11 +72,12 @@ func New(
 		TransferZKProofValidate,
 		TransferHTLCValidate,
 	}
-	transferValidators = append(transferValidators, extraValidators...)
+	transferValidators = append(transferValidators, extraTransferValidators...)
 
 	issueValidators := []ValidateIssueFunc{
 		IssueValidate,
 	}
+	issueValidators = append(issueValidators, extraIssueValidators...)
 
 	return common.NewValidator[*v1.PublicParams, *token.Token, *transfer.Action, *issue.Action, driver.Deserializer](
 		logger,
@@ -76,5 +86,6 @@ func New(
 		&ActionDeserializer{},
 		transferValidators,
 		issueValidators,
+		extraL2ContextValidators,
 	)
 }

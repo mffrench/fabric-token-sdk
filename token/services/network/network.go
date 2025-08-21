@@ -190,11 +190,11 @@ func (n *Network) NewEnvelope() *Envelope {
 }
 
 // RequestApproval requests approval for the given token request
-func (n *Network) RequestApproval(context view.Context, tms *token.ManagementService, requestRaw []byte, signer view.Identity, txID TxID) (*Envelope, error) {
+func (n *Network) RequestApproval(context view.Context, tms *token.ManagementService, requestRaw []byte, signer view.Identity, txID TxID, sbContext []byte) (*Envelope, error) {
 	env, err := n.n.RequestApproval(context, tms, requestRaw, signer, driver.TxID{
 		Nonce:   txID.Nonce,
 		Creator: txID.Creator,
-	})
+	}, sbContext)
 	if err != nil {
 		return nil, err
 	}

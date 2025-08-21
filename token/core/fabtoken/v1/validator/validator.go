@@ -13,6 +13,8 @@ import (
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/logging"
 )
 
+type ValidateSBContextFunc = common.ValidateSBContextFunc[*core.PublicParams, *core.Output, *core.TransferAction, *core.IssueAction, driver.Deserializer]
+
 type ValidateTransferFunc = common.ValidateTransferFunc[*core.PublicParams, *core.Output, *core.TransferAction, *core.IssueAction, driver.Deserializer]
 
 type ValidateIssueFunc = common.ValidateIssueFunc[*core.PublicParams, *core.Output, *core.TransferAction, *core.IssueAction, driver.Deserializer]
@@ -65,5 +67,6 @@ func NewValidator(logger logging.Logger, pp *core.PublicParams, deserializer dri
 		&ActionDeserializer{},
 		transferValidators,
 		issueValidators,
+		[]ValidateSBContextFunc{},
 	)
 }

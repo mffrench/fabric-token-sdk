@@ -99,7 +99,7 @@ func NewFSCService(
 	}, nil
 }
 
-func (e *FSCService) Endorse(context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID) (driver.Envelope, error) {
+func (e *FSCService) Endorse(context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID, sbContext []byte) (driver.Envelope, error) {
 	var endorsers []view.Identity
 	switch e.PolicyType {
 	case OneOutNPolicy:
@@ -114,6 +114,7 @@ func (e *FSCService) Endorse(context view.Context, requestRaw []byte, signer vie
 	envBoxed, err := e.ViewManager.InitiateView(&RequestApprovalView{
 		TMSID:      e.TmsID,
 		RequestRaw: requestRaw,
+		SBContext:  sbContext,
 		TxID:       txID,
 		Endorsers:  endorsers,
 	}, context.Context())

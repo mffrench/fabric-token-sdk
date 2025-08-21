@@ -27,6 +27,7 @@ type RequestApprovalView struct {
 	TMSID      token2.TMSID
 	TxID       driver.TxID
 	RequestRaw []byte
+	SBContext  []byte
 	// RequestAnchor, if not nil it will instruct the approver to verify the token request using this anchor and not the transaction it.
 	// This is to be used only for testing.
 	RequestAnchor string
@@ -61,6 +62,11 @@ func (r *RequestApprovalView) Call(context view.Context) (interface{}, error) {
 	if err := tx.SetTransient("token_request", r.RequestRaw); err != nil {
 		return nil, errors.WithMessagef(err, "failed to set token request transient")
 	}
+
+	logger.Warnf("MAFF: RequestApprovalView.Call().SetTransient sbiz_context")
+	if err := tx.SetTransient("sbiz_context", r.SBContext); err != nil {
+		return nil, errors.WithMessagef(err, "failed to set app context transient")
+	}
 	if len(r.RequestAnchor) != 0 {
 		if err := tx.SetTransient("RequestAnchor", []byte(r.RequestAnchor)); err != nil {
 			return nil, errors.WithMessagef(err, "failed to set token request transient")
@@ -72,7 +78,7 @@ func (r *RequestApprovalView) Call(context view.Context) (interface{}, error) {
 		}
 	}
 
-	logger.Debugf("Request Endorsement on tx [%s] to [%v]...", tx.ID(), r.Endorsers)
+	logger.Warnf("MAFF: Request Endorsement on token request tx [%s] to [%v]...", tx.ID(), r.Endorsers)
 	_, err = context.RunView(endorser.NewParallelCollectEndorsementsOnProposalView(
 		tx,
 		r.Endorsers...,

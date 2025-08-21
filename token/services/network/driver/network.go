@@ -53,7 +53,7 @@ type Network interface {
 	NewEnvelope() Envelope
 
 	// RequestApproval requests approval for the passed request and returns the returned envelope
-	RequestApproval(context view.Context, tms *token2.ManagementService, requestRaw []byte, signer view.Identity, txID TxID) (Envelope, error)
+	RequestApproval(context view.Context, tms *token2.ManagementService, requestRaw []byte, signer view.Identity, txID TxID, sbContext []byte) (Envelope, error)
 
 	// ComputeTxID computes the network transaction id from the passed abstract transaction id
 	ComputeTxID(id *TxID) string

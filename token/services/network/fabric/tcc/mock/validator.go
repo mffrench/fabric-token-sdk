@@ -7,6 +7,7 @@ import (
 
 	"github.com/hyperledger-labs/fabric-token-sdk/token/driver"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/network/fabric/tcc"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
 type Validator struct {
@@ -57,6 +58,10 @@ func (fake *Validator) UnmarshallAndVerifyWithMetadata(arg1 context.Context, arg
 		return ret.result1, ret.result2, ret.result3
 	}
 	return fakeReturns.result1, fakeReturns.result2, fakeReturns.result3
+}
+
+func (fake *Validator) VerifySideBizContext(ctx context.Context, stub shim.ChaincodeStubInterface, anchor string, raw []byte, ccArgs [][]byte, ccTArgs map[string][]byte,) error {
+	return nil
 }
 
 func (fake *Validator) UnmarshallAndVerifyWithMetadataCallCount() int {

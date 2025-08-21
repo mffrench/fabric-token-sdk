@@ -85,7 +85,6 @@ func (s *PPManagerFactoryService) DefaultValidator(pp driver.PublicParameters) (
 	}
 	return nil, errors.Errorf("cannot load default validator, driver [%s] not found", pp.Identifier())
 }
-
 type WalletServiceFactoryService struct {
 	*factoryDirectory[driver.WalletServiceFactory]
 }

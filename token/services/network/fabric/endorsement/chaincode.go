@@ -24,7 +24,8 @@ func NewChaincodeEndorsementService(tmsID token2.TMSID) *ChaincodeEndorsementSer
 	return &ChaincodeEndorsementService{TMSID: tmsID}
 }
 
-func (e *ChaincodeEndorsementService) Endorse(context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID) (driver.Envelope, error) {
+func (e *ChaincodeEndorsementService) Endorse(context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID, sbContext []byte) (driver.Envelope, error) {
+	logger.Warnf("MAFF: ChaincodeEndorsementService.Endorse with sbiz_context")
 	env, err := chaincode.NewEndorseView(
 		e.TMSID.Namespace,
 		InvokeFunction,
@@ -36,6 +37,8 @@ func (e *ChaincodeEndorsementService) Endorse(context view.Context, requestRaw [
 		signer,
 	).WithTransientEntry(
 		"token_request", requestRaw,
+	).WithTransientEntry(
+		"sbiz_context", sbContext,
 	).WithTxID(
 		fabric.TxID{
 			Nonce:   txID.Nonce,

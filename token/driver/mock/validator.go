@@ -7,6 +7,7 @@ import (
 
 	"github.com/hyperledger-labs/fabric-token-sdk/token/driver"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/token"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
 type Validator struct {
@@ -139,6 +140,10 @@ func (fake *Validator) VerifyTokenRequestFromRaw(arg1 context.Context, arg2 func
 		return ret.result1, ret.result2, ret.result3
 	}
 	return fakeReturns.result1, fakeReturns.result2, fakeReturns.result3
+}
+
+func (fake *Validator) VerifySideBizContextsFromRaw(ctx context.Context, stub shim.ChaincodeStubInterface, anchor string, raw []byte, l2context []byte) error {
+	return nil
 }
 
 func (fake *Validator) VerifyTokenRequestFromRawCallCount() int {

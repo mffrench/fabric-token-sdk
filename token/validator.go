@@ -11,6 +11,7 @@ import (
 
 	"github.com/hyperledger-labs/fabric-token-sdk/token/driver"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/token"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
 // Ledger models a read-only ledger
@@ -53,6 +54,15 @@ func (c *Validator) UnmarshallAndVerifyWithMetadata(ctx context.Context, ledger 
 	res := make([]interface{}, len(actions))
 	copy(res, actions)
 	return res, meta, nil
+}
+
+func (c *Validator) VerifySideBizContext(ctx context.Context, stub shim.ChaincodeStubInterface, anchor string, raw []byte, ccArgs [][]byte, ccTArgs map[string][]byte) error {
+	logger.Warnf("MAFF: verify side biz context...")
+	if sbctx, ok := ccTArgs["sbiz_context"]; ok {
+		logger.Warnf("MAFF: receive sbiz_context transiant: [%#v]", sbctx)
+		return c.backend.VerifySideBizContextsFromRaw(ctx, stub, anchor, raw, sbctx)
+	}
+	return nil
 }
 
 type stateGetter struct {
