@@ -12,6 +12,7 @@ import (
 
 	"github.com/hyperledger-labs/fabric-token-sdk/token/driver"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/logging"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/pkg/errors"
 )
 
@@ -40,6 +41,8 @@ func (c *Context[P, T, TA, IA, DS]) CountMetadataKey(key string) {
 	c.MetadataCounter[key] = c.MetadataCounter[key] + 1
 }
 
+type ValidateSBContextFunc[P driver.PublicParameters, T any, TA driver.TransferAction, IA driver.IssueAction, DS driver.Deserializer] func(ctx *Context[P, T, TA, IA, DS], stub shim.ChaincodeStubInterface, sbPContext []byte, sbTContext []byte) error
+
 type ValidateTransferFunc[P driver.PublicParameters, T any, TA driver.TransferAction, IA driver.IssueAction, DS driver.Deserializer] func(ctx *Context[P, T, TA, IA, DS]) error
 
 type ValidateIssueFunc[P driver.PublicParameters, T any, TA driver.TransferAction, IA driver.IssueAction, DS driver.Deserializer] func(ctx *Context[P, T, TA, IA, DS]) error
@@ -49,12 +52,13 @@ type ActionDeserializer[TA driver.TransferAction, IA driver.IssueAction] interfa
 }
 
 type Validator[P driver.PublicParameters, T any, TA driver.TransferAction, IA driver.IssueAction, DS driver.Deserializer] struct {
-	Logger             logging.Logger
-	PublicParams       P
-	Deserializer       DS
-	ActionDeserializer ActionDeserializer[TA, IA]
-	TransferValidators []ValidateTransferFunc[P, T, TA, IA, DS]
-	IssueValidators    []ValidateIssueFunc[P, T, TA, IA, DS]
+	Logger              logging.Logger
+	PublicParams        P
+	Deserializer        DS
+	ActionDeserializer  ActionDeserializer[TA, IA]
+	TransferValidators  []ValidateTransferFunc[P, T, TA, IA, DS]
+	IssueValidators     []ValidateIssueFunc[P, T, TA, IA, DS]
+	SBContextValidators []ValidateSBContextFunc[P, T, TA, IA, DS]
 }
 
 func NewValidator[P driver.PublicParameters, T any, TA driver.TransferAction, IA driver.IssueAction, DS driver.Deserializer](
@@ -64,14 +68,16 @@ func NewValidator[P driver.PublicParameters, T any, TA driver.TransferAction, IA
 	actionDeserializer ActionDeserializer[TA, IA],
 	transferValidators []ValidateTransferFunc[P, T, TA, IA, DS],
 	issueValidators []ValidateIssueFunc[P, T, TA, IA, DS],
+	sbContextValidators []ValidateSBContextFunc[P, T, TA, IA, DS],
 ) *Validator[P, T, TA, IA, DS] {
 	return &Validator[P, T, TA, IA, DS]{
-		Logger:             Logger,
-		PublicParams:       publicParams,
-		Deserializer:       deserializer,
-		ActionDeserializer: actionDeserializer,
-		TransferValidators: transferValidators,
-		IssueValidators:    issueValidators,
+		Logger:              Logger,
+		PublicParams:        publicParams,
+		Deserializer:        deserializer,
+		ActionDeserializer:  actionDeserializer,
+		TransferValidators:  transferValidators,
+		IssueValidators:     issueValidators,
+		SBContextValidators: sbContextValidators,
 	}
 }
 
@@ -252,6 +258,21 @@ func (v *Validator[P, T, TA, IA, DS]) verifyTransfer(tr TA, ledger driver.Ledger
 		return errors.Errorf("more metadata than those validated [%d]!=[%d], [%v]!=[%v]", len(tr.GetMetadata()), counter, tr.GetMetadata(), context.MetadataCounter)
 	}
 
+	return nil
+}
+
+func (v *Validator[P, T, TA, IA, DS]) VerifySideBizContextsFromRaw(ctx context.Context, stub shim.ChaincodeStubInterface, anchor string, raw []byte, sbpContext []byte, sbtContext []byte) error {
+	context := &Context[P, T, TA, IA, DS]{
+		Logger:       v.Logger,
+		PP:           v.PublicParams,
+		Deserializer: v.Deserializer,
+	}
+
+	for _, val := range v.SBContextValidators {
+		if err := val(context, stub, sbpContext, sbtContext); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

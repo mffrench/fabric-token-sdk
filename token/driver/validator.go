@@ -10,6 +10,7 @@ import (
 	"context"
 
 	"github.com/hyperledger-labs/fabric-token-sdk/token/token"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
 // ValidationAttributeID is the type of validation attribute identifier
@@ -49,4 +50,6 @@ type Validator interface {
 	// The function returns additionally a map that contains information about the token request. The content of this map
 	// is driver-dependant
 	VerifyTokenRequestFromRaw(ctx context.Context, getState GetStateFnc, anchor string, raw []byte) ([]interface{}, ValidationAttributes, error)
+
+	VerifySideBizContextsFromRaw(ctx context.Context, stub shim.ChaincodeStubInterface, anchor string, raw []byte, sbPContext []byte, sbTContext []byte) error
 }

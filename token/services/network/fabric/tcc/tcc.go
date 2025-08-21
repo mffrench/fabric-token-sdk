@@ -54,6 +54,8 @@ func (a *SetupAction) GetSetupParameters() ([]byte, error) {
 
 type Validator interface {
 	UnmarshallAndVerifyWithMetadata(ctx context.Context, ledger token.Ledger, anchor string, raw []byte) ([]interface{}, map[string][]byte, error)
+
+	VerifySideBizContext(ctx context.Context, stub shim.ChaincodeStubInterface, anchor string, raw []byte, ccArgs [][]byte, ccTArgs map[string][]byte) error
 }
 
 //go:generate counterfeiter -o mock/public_parameters_manager.go -fake-name PublicParametersManager . PublicParametersManager
@@ -63,9 +65,10 @@ type PublicParameters interface {
 }
 
 type TokenChaincode struct {
-	initOnce         sync.Once
-	Validator        Validator
-	PublicParameters PublicParameters
+	initOnce            sync.Once
+	Validator           Validator
+	PublicParameters    PublicParameters
+	TokenExtendedInvoke func(stub shim.ChaincodeStubInterface) (res pb.Response)
 
 	PPDigest             []byte
 	TokenServicesFactory func([]byte) (PublicParameters, Validator, error)
@@ -110,19 +113,16 @@ func (cc *TokenChaincode) Invoke(stub shim.ChaincodeStubInterface) (res pb.Respo
 		logger.Debugf("[%s] %s", txID, string(args[0]))
 		switch f := string(args[0]); f {
 		case InvokeFunction:
-			if len(args) != 1 {
+			if len(args) < 1 {
 				return shim.Error("empty token request")
 			}
+			// logger.Warnf("args: [%#v]", args)
 			// extract token request from transient
 			t, err := stub.GetTransient()
 			if err != nil {
 				return shim.Error("failed getting transient")
 			}
-			tokenRequest, ok := t["token_request"]
-			if !ok {
-				return shim.Error("failed getting token request, entry not found")
-			}
-			return cc.ProcessRequest(tokenRequest, stub)
+			return cc.ProcessRequest(args, t, stub)
 		case QueryPublicParamsFunction:
 			return cc.QueryPublicParams(stub)
 		case QueryTokensFunctions:
@@ -141,6 +141,9 @@ func (cc *TokenChaincode) Invoke(stub shim.ChaincodeStubInterface) (res pb.Respo
 			}
 			return cc.QueryStates(args[1], stub)
 		default:
+			if cc.TokenExtendedInvoke != nil {
+				return cc.TokenExtendedInvoke(stub)
+			}
 			return shim.Error(fmt.Sprintf("function [%s] not recognized", f))
 		}
 	}
@@ -217,18 +220,35 @@ func (cc *TokenChaincode) ReadParamsFromFile() string {
 	return base64.StdEncoding.EncodeToString(paramsAsBytes)
 }
 
-func (cc *TokenChaincode) ProcessRequest(raw []byte, stub shim.ChaincodeStubInterface) pb.Response {
+func (cc *TokenChaincode) ProcessRequest(args [][]byte, tArgs map[string][]byte, stub shim.ChaincodeStubInterface) pb.Response {
+	// logger.Warnf("MAFF: len(args): %d ; args: %#v", len(args), args)
+	// logger.Warnf("transient args: [%#v]", t)
+	tokenRequestRaw, ok := tArgs["token_request"]
+	if !ok {
+		return shim.Error("failed getting token request, entry not found")
+	}
+	// logger.Warnf("tokenRequest: [%#v]", tokenRequest)
+
 	validator, err := cc.GetValidator(Params)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
 	// Verify
+	validator.VerifySideBizContext(
+		context.Background(),
+		stub,
+		stub.GetTxID(),
+		tokenRequestRaw,
+		args,
+		tArgs,
+	)
+
 	actions, attributes, err := validator.UnmarshallAndVerifyWithMetadata(
 		context.Background(),
 		&ledger{stub: stub, keyTranslator: &keys.Translator{}},
 		stub.GetTxID(),
-		raw,
+		tokenRequestRaw,
 	)
 	if err != nil {
 		return shim.Error("failed to verify token request: " + err.Error())

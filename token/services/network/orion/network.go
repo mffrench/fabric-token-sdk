@@ -161,7 +161,7 @@ func (n *Network) GetTransient(id string) (driver.TransientMap, error) {
 	return tm, nil
 }
 
-func (n *Network) RequestApproval(context view.Context, tms *token2.ManagementService, requestRaw []byte, signer view.Identity, txID driver.TxID) (driver.Envelope, error) {
+func (n *Network) RequestApproval(context view.Context, tms *token2.ManagementService, requestRaw []byte, signer view.Identity, txID driver.TxID, sbPContext []byte, sbTContext []byte) (driver.Envelope, error) {
 	envBoxed, err := view2.GetManager(context).InitiateView(NewRequestApprovalView(
 		n.dbManager,
 		n.n.Name(), tms.Namespace(),

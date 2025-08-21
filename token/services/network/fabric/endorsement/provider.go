@@ -64,7 +64,7 @@ func NewServiceProvider(
 }
 
 type Service interface {
-	Endorse(context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID) (driver.Envelope, error)
+	Endorse(context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID, sbContextParams []byte, sbContextTransient []byte) (driver.Envelope, error)
 }
 
 type loader struct {

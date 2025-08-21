@@ -24,8 +24,43 @@ func NewChaincodeEndorsementService(tmsID token2.TMSID) *ChaincodeEndorsementSer
 	return &ChaincodeEndorsementService{TMSID: tmsID}
 }
 
-func (e *ChaincodeEndorsementService) Endorse(context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID) (driver.Envelope, error) {
-	env, err := chaincode.NewEndorseView(
+func (e *ChaincodeEndorsementService) Endorse(
+	context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID, 
+	sbParamsContext []byte, sbTransientContext []byte,
+) (driver.Envelope, error) {
+	if len(sbParamsContext) != 0 {
+		view := chaincode.NewEndorseView(
+			e.TMSID.Namespace,
+			InvokeFunction,
+			sbParamsContext,
+		).WithNetwork(
+			e.TMSID.Network,
+		).WithChannel(
+			e.TMSID.Channel,
+		).WithSignerIdentity(
+			signer,
+		).WithTransientEntry(
+			"token_request", requestRaw,
+		).WithTxID(
+			fabric.TxID{
+				Nonce:   txID.Nonce,
+				Creator: txID.Creator,
+			},
+		)
+		if len(sbTransientContext) != 0 {
+			view = view.WithTransientEntry(
+				"sbiz_context", sbTransientContext,
+			)			
+		}
+
+		env, err := view.Endorse(context)
+		if err != nil {
+			return nil, err
+		}
+		return env, nil
+	}
+	
+	view := chaincode.NewEndorseView(
 		e.TMSID.Namespace,
 		InvokeFunction,
 	).WithNetwork(
@@ -41,7 +76,14 @@ func (e *ChaincodeEndorsementService) Endorse(context view.Context, requestRaw [
 			Nonce:   txID.Nonce,
 			Creator: txID.Creator,
 		},
-	).Endorse(context)
+	)
+	if len(sbTransientContext) != 0 {
+		view = view.WithTransientEntry(
+			"sbiz_context", sbTransientContext,
+		)
+	}
+
+	env, err := view.Endorse(context)
 	if err != nil {
 		return nil, err
 	}

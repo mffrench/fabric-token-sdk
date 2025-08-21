@@ -249,12 +249,12 @@ func (n *Network) NewEnvelope() driver.Envelope {
 	return n.n.TransactionManager().NewEnvelope()
 }
 
-func (n *Network) RequestApproval(context view.Context, tms *token2.ManagementService, requestRaw []byte, signer view.Identity, txID driver.TxID) (driver.Envelope, error) {
+func (n *Network) RequestApproval(context view.Context, tms *token2.ManagementService, requestRaw []byte, signer view.Identity, txID driver.TxID, sbParamsContext []byte, sbTransientContext []byte) (driver.Envelope, error) {
 	endorsement, err := n.endorsementServiceProvider.Get(tms.ID())
 	if err != nil {
 		return nil, errors.Wrapf(err, "network not connected [%s]", tms.ID())
 	}
-	return endorsement.Endorse(context, requestRaw, signer, txID)
+	return endorsement.Endorse(context, requestRaw, signer, txID, sbParamsContext, sbTransientContext)
 }
 
 func (n *Network) ComputeTxID(id *driver.TxID) string {

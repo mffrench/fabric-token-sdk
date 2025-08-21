@@ -128,6 +128,7 @@ func (c *CollectEndorsementsView) Call(context view.Context) (interface{}, error
 	// 3. Endorse and return the transaction envelope
 	var env *network.Envelope
 	if !c.Opts.SkipApproval {
+		// logger.Warnf("MAFF: Request approval from endorser")
 		span.AddEvent("Request approval from endorser")
 		env, err = c.requestApproval(context)
 		if err != nil {
@@ -398,6 +399,8 @@ func (c *CollectEndorsementsView) requestApproval(context view.Context) (*networ
 		requestRaw,
 		c.tx.Signer,
 		c.tx.Payload.TxID,
+		c.tx.Opts.SBParamsContext,
+		c.tx.Opts.SBTransientContext,
 	)
 	if err != nil {
 		return nil, err

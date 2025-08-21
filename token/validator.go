@@ -11,6 +11,7 @@ import (
 
 	"github.com/hyperledger-labs/fabric-token-sdk/token/driver"
 	"github.com/hyperledger-labs/fabric-token-sdk/token/token"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
 // Ledger models a read-only ledger
@@ -53,6 +54,18 @@ func (c *Validator) UnmarshallAndVerifyWithMetadata(ctx context.Context, ledger 
 	res := make([]interface{}, len(actions))
 	copy(res, actions)
 	return res, meta, nil
+}
+
+func (c *Validator) VerifySideBizContext(ctx context.Context, stub shim.ChaincodeStubInterface, anchor string, raw []byte, ccArgs [][]byte, ccTArgs map[string][]byte) error {
+	var sbpCtx []byte = []byte{}
+	if len(ccArgs) > 1 {
+		sbpCtx = ccArgs[1]
+	}
+	sbtCtx := ccTArgs["sbiz_context"]
+	if len(sbpCtx) != 0 || len(sbtCtx) != 0 {
+		return c.backend.VerifySideBizContextsFromRaw(ctx, stub, anchor, raw, sbpCtx, sbtCtx)
+	}
+	return nil
 }
 
 type stateGetter struct {

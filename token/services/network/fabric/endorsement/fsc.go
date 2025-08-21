@@ -99,7 +99,7 @@ func NewFSCService(
 	}, nil
 }
 
-func (e *FSCService) Endorse(context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID) (driver.Envelope, error) {
+func (e *FSCService) Endorse(context view.Context, requestRaw []byte, signer view.Identity, txID driver.TxID, sbParamsContext []byte, sbTransientContext []byte) (driver.Envelope, error) {
 	var endorsers []view.Identity
 	switch e.PolicyType {
 	case OneOutNPolicy:
@@ -112,10 +112,12 @@ func (e *FSCService) Endorse(context view.Context, requestRaw []byte, signer vie
 	logger.Debugf("request approval via fts endrosers with policy [%s]: [%d]...", e.PolicyType, len(endorsers))
 
 	envBoxed, err := e.ViewManager.InitiateView(&RequestApprovalView{
-		TMSID:      e.TmsID,
-		RequestRaw: requestRaw,
-		TxID:       txID,
-		Endorsers:  endorsers,
+		TMSID:              e.TmsID,
+		RequestRaw:         requestRaw,
+		SBParamContext:     sbParamsContext,
+		SBTransientContext: sbTransientContext,
+		TxID:               txID,
+		Endorsers:          endorsers,
 	}, context.Context())
 	if err != nil {
 		return nil, errors.WithMessagef(err, "failed to request approval")

@@ -45,6 +45,21 @@ func (d *base) DefaultValidator(pp driver.PublicParameters) (driver.Validator, e
 	return validator.New(logger, pp.(*v1.PublicParams), deserializer), nil
 }
 
+func DefaultWithSBContextValidator(
+	pp driver.PublicParameters,
+	extraSBContextValidators []validator.ValidateSBContextFunc,
+) (driver.Validator, error) {
+	if pp.Identifier() != v1.DLogPublicParameters {
+		return nil, errors.Errorf("Should be used only with %s public parameters", v1.DLogPublicParameters)
+	}
+	deserializer, err := NewDeserializer(pp.(*v1.PublicParams))
+	if err != nil {
+		return nil, errors.Errorf("failed to create token service deserializer: %v", err)
+	}
+	logger := logging.DriverLoggerFromPP("token-sdk.driver.zkatdlog", pp.Identifier())
+	return validator.New(logger, pp.(*v1.PublicParams), deserializer, validator.WithValidateSBContextFuncs(extraSBContextValidators)), nil
+}
+
 func (d *base) newWalletService(
 	tmsConfig core.Config,
 	binder idriver.NetworkBinderService,

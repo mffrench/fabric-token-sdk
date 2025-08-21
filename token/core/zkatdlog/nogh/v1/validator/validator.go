@@ -16,6 +16,8 @@ import (
 	"github.com/hyperledger-labs/fabric-token-sdk/token/services/logging"
 )
 
+type ValidateSBContextFunc = common.ValidateSBContextFunc[*v1.PublicParams, *token.Token, *transfer.Action, *issue.Action, driver.Deserializer]
+
 type ValidateTransferFunc = common.ValidateTransferFunc[*v1.PublicParams, *token.Token, *transfer.Action, *issue.Action, driver.Deserializer]
 
 type ValidateIssueFunc = common.ValidateIssueFunc[*v1.PublicParams, *token.Token, *transfer.Action, *issue.Action, driver.Deserializer]
@@ -54,8 +56,12 @@ func New(
 	logger logging.Logger,
 	pp *v1.PublicParams,
 	deserializer driver.Deserializer,
-	extraValidators ...ValidateTransferFunc,
+	opts ...ValidatorOption,
 ) *Validator {
+	options, err := CompileOpts(opts...)
+	if err != nil {
+		panic("failed to compile validator options")
+	}
 	transferValidators := []ValidateTransferFunc{
 		TransferActionValidate,
 		TransferSignatureValidate,
@@ -63,7 +69,7 @@ func New(
 		TransferZKProofValidate,
 		TransferHTLCValidate,
 	}
-	transferValidators = append(transferValidators, extraValidators...)
+	transferValidators = append(transferValidators, options.ValidateTransferFunc...)
 
 	issueValidators := []ValidateIssueFunc{
 		IssueValidate,
@@ -76,5 +82,6 @@ func New(
 		&ActionDeserializer{},
 		transferValidators,
 		issueValidators,
+		options.ValidateSBContextFunc,
 	)
 }
